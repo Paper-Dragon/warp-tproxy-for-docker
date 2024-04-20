@@ -105,10 +105,8 @@ if [ -n "$warp_org_id" ] && [ -n "$auth_client_id" ] && [ -n "$auth_client_secre
 else
     # license exsits, but not registered
     if [ -n "$warp_license" ]; then
-        while ! /usr/bin/warp-cli registration show 2>/dev/null | grep "$warp_license"; do
-            echo "[+] Set warp license to $warp_license ... $(/usr/bin/warp-cli registration license $warp_license)"
-            sleep 1
-        done 
+        # only set licence key, not connect!!!! maybe error
+        echo "[+] Set warp license to $warp_license ... $(/usr/bin/warp-cli registration license $warp_license)"
     fi
     # no license, but not registered
     echo "[+] New registration generated ... $(/usr/bin/warp-cli registration new)"
