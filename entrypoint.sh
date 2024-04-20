@@ -79,13 +79,13 @@ if [ -n "$(pgrep warp-svc)" ]; then
     echo "[+] warp-svc already running!"
 else
     echo "[+] Starting warp-svc..."
-    nohup /usr/bin/warp-svc >/dev/null 2>&1 &
+    nohup /usr/bin/warp-svc 2>&1 &
 fi
 
 
 # wait for warp-svc to start
 while ! /usr/bin/warp-cli status 2>/dev/null | grep 'Status'; do
-    echo "[+] warp-cli status $(/usr/bin/warp-cli status 2>/dev/null)  ..."
+    echo "[+] wait warp-svc show status $(/usr/bin/warp-cli status 2>/dev/null | grep 'Status')  ..."
     sleep 1
 done
 
