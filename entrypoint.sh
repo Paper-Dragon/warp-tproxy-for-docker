@@ -108,8 +108,8 @@ else
     # no license, but not registered
     echo "[+] New registration generated ... $(/usr/bin/warp-cli registration new)"
 
-    # change the operation mode to proxy and set the port (mdm is not needed in this case, should set mode and port in Zero Trust dashboard.)
-    echo "[+] Set warp mode to proxy ... $(/usr/bin/warp-cli mode proxy)"
+    # change the operation mode to warp and set the port (mdm is not needed in this case, should set tproxy mode in Zero Trust dashboard.)
+    echo "[+] Set warp mode to warp ... $(/usr/bin/warp-cli mode warp)"
 fi
 
 # wait for warp to connect
@@ -132,9 +132,9 @@ echo "---"
 echo "[+] warp status: $(/usr/bin/warp-cli status | grep 'Status')"
 echo ""
 # https://cloudflare.com/cdn-cgi/trace will show the warp ip
-echo "[+] You can check it with warp local proxy in container:"
+echo "[+] You can check it with warp local tproxy in container:"
 echo "    E.g.:"
-echo "      curl -x $warp_proxy_url https://cloudflare.com/cdn-cgi/trace (inside container)"
+echo "      curl -x https://cloudflare.com/cdn-cgi/trace (inside container)"
 
 # keep checking warp status
 connect_lost=false
