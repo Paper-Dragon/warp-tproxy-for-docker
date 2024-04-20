@@ -82,9 +82,10 @@ else
     nohup /usr/bin/warp-svc >/dev/null 2>&1 &
 fi
 
+
 # wait for warp-svc to start
-while [ -z "$(/usr/bin/warp-cli status 2>/dev/null | grep 'Status')" ]; do
-    echo "[+] warp-cli status status $(/usr/bin/warp-cli)  ..."
+while ! $(/usr/bin/warp-cli status 2>/dev/null | grep 'Status'); do
+    echo "[+] warp-cli status status $(/usr/bin/warp-cli status)  ..."
     sleep 1
 done
 
