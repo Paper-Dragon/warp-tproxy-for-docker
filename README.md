@@ -1,6 +1,6 @@
 # Warpod
 
-A containerized [WARP](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp) client with [gost](https://github.com/go-gost/gost) proxy. (ubuntu:22.04 + warp-svc + gost) for use Zero Trust and private network inside container project and k8s.
+A containerized [WARP](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp) client proxy. (ubuntu:22.04 + warp-svc) for use Zero Trust and private network inside container project and k8s.
 
 Working with `free` or `warp+` and `zero Trust` network.
 
@@ -15,18 +15,12 @@ Working with `free` or `warp+` and `zero Trust` network.
   - [License](#license)
 
 ## Features
-
-Only start warp use `proxy mode` at `41080` in the contrainer (for rootless, no iptables, no systemctl, no networkManager, no dbus service)
-
-Use `gost` to open `socks5:1080` `http:1081` `https:1082` and all forward-chain to `warp-svc` at `41080`.
-
 It can running with `docker` or `podman` or `k8s` on linux platform.
 
-You can use `PORXY_AUTH` to set a proxy's authentication if need.
 
 ## Environment Variables
 
-- **WARP_ORG_ID** - WARP MDM organization ID. (E.g. `deepwn`)
+- **WARP_ORG_ID** - WARP MDM organization ID. (E.g. `paperdragon`)
 - **WARP_AUTH_CLIENT_ID** - WARP MDM client ID. (E.g. `[a-z0-9]{32}` with subfix `.access`)
 - **WARP_AUTH_CLIENT_SECRET** - WARP MDM client secret. (E.g. `[a-z0-9]{64}`)
 - **WARP_UNIQUE_CLIENT_ID** - WARP MDM unique client ID.
@@ -79,65 +73,14 @@ but for not break the `entrypoint.sh` flow. plase do **NOT** change this part:
 1. create a `Access -> Service Authentication -> Service Token` and get `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` from dashboard. (set to ./secrets)
 1. goto `Settings -> Warp Client -> Device settings` and add a new policy (E.g.: named "mdmPolicy").
 1. into the policy config page, add a rule to let `email` - `is` - `non_identity@[your_org_name].cloudflareaccess.com` in expression. (Or filter by device uuid)
-1. go down and find `Service mode` to set `proxy` mode and port `41080`. [why must set proxy mode in policy?](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/deployment/mdm-deployment/parameters/#service_mode)
+1. go down and find `Service mode` to set `Gateway with WARP` mode. [why must set Gateway with WARP mode in policy?](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/deployment/mdm-deployment/parameters/#service_mode)
 1. modify other settings if your want.
 1. then save it.
 
-## Run with ghcr.io
-
-```sh
-docker pull ghcr.io/deepwn/warpod:latest
-```
-
-then follow the [Environment Variables](#environment-variables) to run it.
-
-```sh
-docker run -d --name warpod --hostname warpod --network warpod \
-  -e WARP_ORG_ID=WARP_ORG_ID \
-  -e WARP_AUTH_CLIENT_ID=WARP_AUTH_CLIENT_ID \
-  -e WARP_AUTH_CLIENT_SECRET=WARP_AUTH_CLIENT_SECRET \
-  -p 1080-1082:1080-1082 \
-  ghcr.io/deepwn/warpod:latest
-```
-
-to testing to set `WARP_ORG_ID` `WARP_AUTH_CLIENT_ID` `WARP_AUTH_CLIENT_SECRET` in your environment.
-
-but you'd better use `docker secret create` to set it in production.
-
 
 ## Build image locally
-
-script: [autorun.sh](./autorun.sh) required `curl` `wget` `jq` commands, and container runtime `docker` or `podman`.
-
-full auto build image with docker or podman just need you run:
-
-```sh
-./autorun.sh -q (quite mode, only build image)
-```
-
-or you can download `gost.tar.gz` from other source at first. but carefully, you need choose the right `linux_amd64` platform for Dockerfile's base image `ubuntu:22.04`
-
-and you can use `-h` to see more help. and you can use `-r` to run container after build.
-
-```text
-./autorun.sh -h
-Usage: ./autorun.sh [options]
-Options:
-  -h, --help      Print this help message
-  -c, --command   Set container runtime command (default: auto select from docker or podman)
-  -t, --tag       Set image tag for warp image (default: warpod:latest)
-  -g, --gost      Download gost binary from specified url (default: from github)
-  -r, --run       Run warpod container after build. it will force renew network and container (default: false)
-  -q, --quiet     Quiet mode (only build image, no input required, and force skip -r option)
-
-Additional:
-  (If need run after build. you can add more options)
-  -n, --hostname  Set hostname and container name (it will register to Zero Trust's Device ID)
-  -p, --ports     Set ports expose (e.g.: -p 1080-1082:1080-1082, to expose to host server)
-  -e, --envs      Set ENV for container (e.g.: -e WARP_LISTEN_PORT=41080 SOME_ENV=VALUE ...)
-
-Example (run after build):
-  ./autorun.sh -t beta-1 -c podman -r -n warpod-beta -p 2080-2082:1080-1082 -e WARP_LISTEN_PORT=21080 --secret WARP_LICENSE=LICENSE
+```bash
+docker build -t paperdragon/warp-svc-tproxy
 ```
 
 ## Example and tips
@@ -145,8 +88,6 @@ Example (run after build):
 test run with podman on rockylinux 8.9:
 
 ```text
-# build a test image
-./autorun.sh -q >/dev/null 2>&1
 
 # Or download from ghcr.io
 # podman pull ghcr.io/deepwn/warpod:latest
@@ -165,14 +106,13 @@ podman run -d --name warpod --hostname warpod --network warpod \
   -e WARP_ORG_ID=WARP_ORG_ID \
   -e WARP_AUTH_CLIENT_ID=WARP_AUTH_CLIENT_ID \
   -e WARP_AUTH_CLIENT_SECRET=WARP_AUTH_CLIENT_SECRET \
-  -p 1080-1082:1080-1082 \
   warpod:latest
   
 # test in container for warp
-podman exec -it warpod curl -x socks5://127.0.0.1:41080 http://cloudflare.com/cdn-cgi/trace
+xxxx podman exec -it warpod curl -x socks5://127.0.0.1:41080 http://cloudflare.com/cdn-cgi/trace
 
 # test out container for gost
-curl -x socks5://127.0.0.1:1080 http://ip-api.com/json
+xxxx curl -x socks5://127.0.0.1:1080 http://ip-api.com/json
 ```
 
 and you can see the output like this:
@@ -181,29 +121,7 @@ and you can see the output like this:
 [+] Starting dbus...
 [+] Bypassing warp's TOS...
 [+] Starting warp-svc...
-[+] Registering mdm save to: /var/lib/cloudflare-warp/mdm.xml
-[+] you should set policy from Zero Trust dashboard.
-    documents: https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/deployment/mdm-deployment/
-[!] Careful: New service modes such as Proxy only are not supported as a value and must be configured in Zero Trust.
-    (https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/deployment/mdm-deployment/parameters/#service_mode)
-[+] Set warp mode to proxy ... Success
-[+] Set proxy listen to 41080 ... Success
-[+] Turn ON warp ... Success
-[+] Waiting for warp to connect...
-[+] warp connected!
-gost config generated: /var/lib/cloudflare-warp/gost.yaml
-[+] All services started!
----
-warp-svc config: /var/lib/cloudflare-warp/conf.json
-gost config: /var/lib/cloudflare-warp/gost.yaml
----
-[+] warp status: Status update: Connected
 
-[+] You can check it with warp local proxy in container:
-    Or use gost proxy at 1080, 1081, 1082 with auth if set
-    E.g.:
-      curl -x socks5://127.0.0.1:41080 https://cloudflare.com/cdn-cgi/trace (inside container)
-      curl -x http://<auth:pass>@<container_ip>:<gost_port> https://ip-api.com/json (outside container)
 ```
 
 
