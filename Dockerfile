@@ -1,8 +1,5 @@
 FROM ubuntu:22.04
 
-# apt mirror: mirrors.cernet.edu.cn (without security updates)
-# ADD sources.list /etc/apt/sources.list
-
 # install deps
 RUN apt-get update && apt-get -y install curl gnupg2 dbus
 

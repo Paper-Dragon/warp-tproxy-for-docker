@@ -9,7 +9,6 @@ Working with `free` or `warp+` and `zero Trust` network.
   - [Environment Variables](#environment-variables)
   - [Registration auto switch](#registration-auto-switch)
   - [Setting MDM in dashboard](#setting-mdm-in-dashboard)
-  - [Run with ghcr.io](#run-with-ghcrio)
   - [Build image locally](#build-image-locally)
   - [Example and tips](#example-and-tips)
   - [License](#license)
