@@ -84,6 +84,7 @@ fi
 
 # wait for warp-svc to start
 while [ -z "$(/usr/bin/warp-cli status 2>/dev/null | grep 'Status')" ]; do
+    echo "[+] warp-cli status status $(/usr/bin/warp-cli)  ..."
     sleep 1
 done
 
