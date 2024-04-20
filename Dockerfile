@@ -13,7 +13,6 @@ RUN curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor
     # && apt-get -y upgrade \
     && apt-get -y install cloudflare-warp
 
-ADD gost.tar.gz /usr/bin
 
 ADD mdm.xml.example /var/lib/cloudflare-warp/mdm.xml.example
 

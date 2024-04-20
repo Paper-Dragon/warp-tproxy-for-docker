@@ -31,12 +31,7 @@ You can use `PORXY_AUTH` to set a proxy's authentication if need.
 - **WARP_AUTH_CLIENT_SECRET** - WARP MDM client secret. (E.g. `[a-z0-9]{64}`)
 - **WARP_UNIQUE_CLIENT_ID** - WARP MDM unique client ID.
 - **WARP_LICENSE** - WARP MDM license key.
-- **WARP_LISTEN_PORT** - warp-svc listen port. (default: `41080`)
-- ~~**WARP_LISTEN_ADDR** - warp-svc listen address. (service not support yet, hardcode to `localhost`)~~
-- **SOCK_PORT** - local socks5 listen port. (default: `1080`)
-- **HTTP_PORT** - local http listen port. (default: `1081`)
-- **HTTPS_PORT** - local https listen port. (default: `1082`)
-- **PROXY_AUTH** - local proxy's authentication. (default `None`, E.g. `user:password`)
+
 
 ## Registration auto switch
 
@@ -211,12 +206,6 @@ gost config: /var/lib/cloudflare-warp/gost.yaml
       curl -x http://<auth:pass>@<container_ip>:<gost_port> https://ip-api.com/json (outside container)
 ```
 
-> [!TIP]
-> you can use `ADD sources.list /etc/apt/sources.list` from Dockerfile if you need a apt source mirror by *.edu.cn.
-> 
-> and you can download another version of `gost.tar.gz` by yourself, and put it in the same directory with Dockerfile.
-> 
-> At last, you can modify the `entrypoint.sh` to add more `gost` listen port or args. for example, add a local dns server or local network proxy.
 
 ## License
 
