@@ -84,7 +84,7 @@ fi
 
 
 # wait for warp-svc to start
-while ! `/usr/bin/warp-cli status 2>/dev/null | grep 'Status'`; do
+while ! /usr/bin/warp-cli status 2>/dev/null | grep 'Status'; do
     echo "[+] warp-cli status $(/usr/bin/warp-cli status 2>/dev/null)  ..."
     sleep 1
 done
@@ -105,7 +105,7 @@ if [ -n "$warp_org_id" ] && [ -n "$auth_client_id" ] && [ -n "$auth_client_secre
 else
     # license exsits, but not registered
     if [ -n "$warp_license" ]; then
-        while !`/usr/bin/warp-cli registration show 2>/dev/null | grep "$warp_license"`; do
+        while ! /usr/bin/warp-cli registration show 2>/dev/null | grep "$warp_license"; do
             echo "[+] Set warp license to $warp_license ... $(/usr/bin/warp-cli registration license $warp_license)"
             sleep 1
         done 
