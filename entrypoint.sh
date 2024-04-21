@@ -8,11 +8,7 @@ warp_org_id=$WARP_ORG_ID
 auth_client_id=$WARP_AUTH_CLIENT_ID
 auth_client_secret=$WARP_AUTH_CLIENT_SECRET
 unique_client_id=${WARP_UNIQUE_CLIENT_ID:-$(cat /proc/sys/kernel/random/uuid)}
-warp_listen_port=${WARP_LISTEN_PORT:-41080}
-sock_port=${SOCK_PORT:-1080}
-http_port=${HTTP_PORT:-1081}
-https_port=${HTTPS_PORT:-1082}
-proxy_auth=$PROXY_AUTH
+debug=${DEBUG:-False}
 
 # from secret file if exists
 if [ -f "/run/secrets/WARP_LICENSE" ]; then
@@ -26,9 +22,6 @@ if [ -f "/run/secrets/WARP_AUTH_CLIENT_ID" ]; then
 fi
 if [ -f "/run/secrets/WARP_AUTH_CLIENT_SECRET" ]; then
     auth_client_secret=$(cat /run/secrets/WARP_AUTH_CLIENT_SECRET)
-fi
-if [ -f "/run/secrets/PROXY_AUTH" ]; then
-    proxy_auth=$(cat /run/secrets/PROXY_AUTH)
 fi
 
 # check parameters valid
@@ -62,45 +55,6 @@ if [ "$unique_client_id" ]; then
         exit 1
     fi
 fi
-if [ "$proxy_auth" ]; then
-    if ! echo "$proxy_auth" | grep -qE '^[a-zA-Z0-9-_.]:[a-zA-Z0-9-_.]$'; then
-        echo "[!] Error: PROXY_AUTH invalid! (e.g.: username:password)"
-        exit 1
-    fi
-fi
-
-# check port is number and in use or out of range
-if [ "$warp_listen_port" ] && ! echo "$warp_listen_port" | grep -qE '^[0-9]+$'; then
-    echo "[!] Error: WARP_LISTEN_PORT is not a number!"
-    exit 1
-elif [ "$warp_listen_port" -lt 1024 ] || [ "$warp_listen_port" -gt 65535 ]; then
-    echo "[!] Error: WARP_LISTEN_PORT out of port range 1024 < port < 65535"
-    exit 1
-fi
-
-if [ "$sock_port" ] && ! echo "$sock_port" | grep -qE '^[0-9]+$'; then
-    echo "[!] Error: SOCK_PORT is not a number!"
-    exit 1
-elif [ "$sock_port" -lt 1024 ] || [ "$sock_port" -gt 65535 ]; then
-    echo "[!] Error: SOCK_PORT out of port range 1024 < port < 65535"
-    exit 1
-fi
-
-if [ "$http_port" ] && ! echo "$http_port" | grep -qE '^[0-9]+$'; then
-    echo "[!] Error: HTTP_PORT is not a number!"
-    exit 1
-elif [ "$http_port" -lt 1024 ] || [ "$http_port" -gt 65535 ]; then
-    echo "[!] Error: HTTP_PORT out of port range 1024 < port < 65535"
-    exit 1
-fi
-
-if [ "$https_port" ] && ! echo "$https_port" | grep -qE '^[0-9]+$'; then
-    echo "[!] Error: HTTPS_PORT is not a number!"
-    exit 1
-elif [ "$https_port" -lt 1024 ] || [ "$https_port" -gt 65535 ]; then
-    echo "[!] Error: HTTPS_PORT out of port range 1024 < port < 65535"
-    exit 1
-fi
 
 # start dbus
 if [ -n "$(pgrep dbus-daemon)" ]; then
@@ -116,7 +70,7 @@ fi
 if [ -f "/root/.local/share/warp/accepted-tos.txt" ]; then
     echo "[+] warp's TOS already accepted!"
 else
-    echo "[+] Bypassing warp's TOS..."
+    echo "[+] Bypassing warp's TOS ..."
     mkdir -p /root/.local/share/warp
     echo -n 'yes' >/root/.local/share/warp/accepted-tos.txt
 fi
@@ -126,11 +80,24 @@ if [ -n "$(pgrep warp-svc)" ]; then
     echo "[+] warp-svc already running!"
 else
     echo "[+] Starting warp-svc..."
-    nohup /usr/bin/warp-svc >/dev/null 2>&1 &
+    if [ ${debug} == "True" ]; then
+        echo -e "[!] warp-svc in debug mode"
+        echo "[!] `docker exec -it container-id tail -f /nohup.out` show warp svc log"
+        nohup /usr/bin/warp-svc 2>&1 &
+    else
+        nohup /usr/bin/warp-svc >/dev/null 2>&1 &
+    fi
 fi
 
+
 # wait for warp-svc to start
-while [ -z "$(/usr/bin/warp-cli status 2>/dev/null | grep 'Status')" ]; do
+while ! /usr/bin/warp-cli status 2>/dev/null | grep 'Status'; do
+    if [ ${debug} == "True" ]; then
+        echo -e "[!] wait for warp-svc to start in debug mode"
+        echo "[+] wait warp-svc show status $(/usr/bin/warp-cli status 2>/dev/null | grep 'Status')  ..."
+    else
+        echo "[+] Waiting for warp to connect..."
+    fi
     sleep 1
 done
 
@@ -150,14 +117,14 @@ if [ -n "$warp_org_id" ] && [ -n "$auth_client_id" ] && [ -n "$auth_client_secre
 else
     # license exsits, but not registered
     if [ -n "$warp_license" ]; then
+        # only set licence key, not connect!!!! maybe error
         echo "[+] Set warp license to $warp_license ... $(/usr/bin/warp-cli registration license $warp_license)"
     fi
     # no license, but not registered
     echo "[+] New registration generated ... $(/usr/bin/warp-cli registration new)"
 
-    # change the operation mode to proxy and set the port (mdm is not needed in this case, should set mode and port in Zero Trust dashboard.)
-    echo "[+] Set warp mode to proxy ... $(/usr/bin/warp-cli mode proxy)"
-    echo "[+] Set proxy listen to $warp_listen_port ... $(/usr/bin/warp-cli proxy port $warp_listen_port)"
+    # change the operation mode to warp and set the port (mdm is not needed in this case, should set tproxy mode in Zero Trust dashboard.)
+    echo "[+] Set warp mode to warp ... $(/usr/bin/warp-cli mode warp)"
 fi
 
 # wait for warp to connect
@@ -172,39 +139,17 @@ done
 
 echo -e "\033[2K\r[+] warp connected!"
 
-# start the gost server when proxy test ok
-warp_proxy_url="socks5://127.0.0.1:$warp_listen_port"
-
-# check gost config
-gost_conf="$warp_path/gost.yaml"
-if [ -f "$gost_conf" ]; then
-    echo "Using custom gost config: $gost_conf"
-else
-    if [ -n "$proxy_auth" ]; then
-        proxy_auth="${proxy_auth}@"
-    fi
-    /usr/bin/gost -L "socks5://${proxy_auth}0.0.0.0:$sock_port" -L "http://${proxy_auth}0.0.0.0:$http_port" -L "https://${proxy_auth}0.0.0.0:$https_port" -F "$warp_proxy_url" -O yaml >$gost_conf
-    echo "gost config generated: $gost_conf"
-fi
-
-# start gost
-cd $warp_path # go to warp path to make ssl files work
-nohup /usr/bin/gost -C $gost_conf >$warp_path/gost.log 2>&1 &
-
 # logging output
 echo "[+] All services started!"
 echo "---"
 echo "warp-svc config: $warp_path/conf.json"
-echo "gost config: $gost_conf"
 echo "---"
 echo "[+] warp status: $(/usr/bin/warp-cli status | grep 'Status')"
 echo ""
 # https://cloudflare.com/cdn-cgi/trace will show the warp ip
-echo "[+] You can check it with warp local proxy in container:"
-echo "    Or use gost proxy at $sock_port, $http_port, $https_port with auth if set"
+echo "[+] You can check it with warp local tproxy in container:"
 echo "    E.g.:"
-echo "      curl -x $warp_proxy_url https://cloudflare.com/cdn-cgi/trace (inside container)"
-echo "      curl -x http://<auth:pass>@<container_ip>:<gost_port> https://ip-api.com/json (outside container)"
+echo "      curl https://cloudflare.com/cdn-cgi/trace (inside container)"
 
 # keep checking warp status
 connect_lost=false
@@ -216,20 +161,11 @@ while true; do
             echo -e "\033[2K\r[!] warp connection lost! retrying..."
             connect_lost=true
             /usr/bin/warp-cli registration delete >/dev/null 2>&1 &&
-                /usr/bin/warp-cli registration new >/dev/null 2>&1 &&
-                /usr/bin/warp-cli connect >/dev/null 2>&1
+            /usr/bin/warp-cli registration new >/dev/null 2>&1 &&
+            /usr/bin/warp-cli connect >/dev/null 2>&1
         fi
         /usr/bin/warp-cli connect >/dev/null 2>&1
         echo -n "."
-    else
-        if [ "$connect_lost" = true ]; then
-            connect_lost=false
-            echo -e "\033[2K\r[+] warp reconnected!"
-            # restart gost
-            cd $warp_path
-            pkill -f gost &&
-                nohup /usr/bin/gost -C $gost_conf >$warp_path/gost.log 2>&1 &
-        fi
     fi
     sleep 5
 done
