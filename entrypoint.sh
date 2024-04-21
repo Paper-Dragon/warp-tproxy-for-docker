@@ -8,6 +8,7 @@ warp_org_id=$WARP_ORG_ID
 auth_client_id=$WARP_AUTH_CLIENT_ID
 auth_client_secret=$WARP_AUTH_CLIENT_SECRET
 unique_client_id=${WARP_UNIQUE_CLIENT_ID:-$(cat /proc/sys/kernel/random/uuid)}
+debug=${DEBUG:-False}
 
 # from secret file if exists
 if [ -f "/run/secrets/WARP_LICENSE" ]; then
@@ -79,7 +80,12 @@ if [ -n "$(pgrep warp-svc)" ]; then
     echo "[+] warp-svc already running!"
 else
     echo "[+] Starting warp-svc..."
-    nohup /usr/bin/warp-svc 2>&1 &
+    if [ ${debug} == "True" ]; then
+        echo -e "[!] warp-svc in debug mode"
+        nohup /usr/bin/warp-svc 2>&1 >/dev/console &
+    else
+        nohup /usr/bin/warp-svc 2>&1 >/dev/null &
+    done
 fi
 
 
@@ -137,7 +143,7 @@ echo ""
 # https://cloudflare.com/cdn-cgi/trace will show the warp ip
 echo "[+] You can check it with warp local tproxy in container:"
 echo "    E.g.:"
-echo "      curl -x https://cloudflare.com/cdn-cgi/trace (inside container)"
+echo "      curl https://cloudflare.com/cdn-cgi/trace (inside container)"
 
 # keep checking warp status
 connect_lost=false
