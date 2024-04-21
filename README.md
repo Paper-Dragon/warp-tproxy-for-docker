@@ -79,39 +79,42 @@ but for not break the `entrypoint.sh` flow. plase do **NOT** change this part:
 
 ## Build image locally
 ```bash
-docker build -t paperdragon/warp-svc-tproxy
+docker build -t paperdragon/warp-tproxy .
 ```
 
 ## Example and tips
 
-test run with podman on rockylinux 8.9:
+test run with docker on ubuntu 23.04:
 
 ```text
 
-# Or download from ghcr.io
-# podman pull ghcr.io/deepwn/warpod:latest
+# Or download from docker hub
+# docker pull jockerdragon/warp-tproxy
 
 # check image
-podman image ls 
-REPOSITORY                       TAG         IMAGE ID      CREATED       SIZE
-localhost/warpod                 latest      91f2fb3774ab  1 second ago  642 MB
+root@user-VirtualBox:/home/user# docker images
+REPOSITORY                 TAG       IMAGE ID       CREATED        SIZE
+jockerdragon/warp-tproxy   latest    1cce82cba813   10 hours ago   570MB
+
 
 # use env just for test, you can set it in ./secrets
 export WARP_ORG_ID=deepwn
 export WARP_AUTH_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx.access
 export WARP_AUTH_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-podman run -d --name warpod --hostname warpod --network warpod \
+podman run -d --name warp \
   -e WARP_ORG_ID=WARP_ORG_ID \
   -e WARP_AUTH_CLIENT_ID=WARP_AUTH_CLIENT_ID \
   -e WARP_AUTH_CLIENT_SECRET=WARP_AUTH_CLIENT_SECRET \
-  warpod:latest
+  --cap-add NET_ADMIN \
+  -v /dev/net/tun:/dev/net/tun \
+  jockerdragon/warp-tproxy
   
 # test in container for warp
-xxxx podman exec -it warpod curl -x socks5://127.0.0.1:41080 http://cloudflare.com/cdn-cgi/trace
+docker exec -it warp curl http://cloudflare.com/cdn-cgi/trace
 
 # test out container for gost
-xxxx curl -x socks5://127.0.0.1:1080 http://ip-api.com/json
+curl http://ifconfig.icu
 ```
 
 and you can see the output like this:
