@@ -82,16 +82,21 @@ else
     echo "[+] Starting warp-svc..."
     if [ ${debug} == "True" ]; then
         echo -e "[!] warp-svc in debug mode"
-        nohup /usr/bin/warp-svc 2>&1 >/dev/console &
+        nohup /usr/bin/warp-svc >/dev/console 2>&1 &
     else
-        nohup /usr/bin/warp-svc 2>&1 >/dev/null &
-    done
+        nohup /usr/bin/warp-svc >/dev/null 2>&1 &
+    fi
 fi
 
 
 # wait for warp-svc to start
 while ! /usr/bin/warp-cli status 2>/dev/null | grep 'Status'; do
-    echo "[+] wait warp-svc show status $(/usr/bin/warp-cli status 2>/dev/null | grep 'Status')  ..."
+     if [ ${debug} == "True" ]; then
+        echo -e "[!] wait for warp-svc to start in debug mode"
+        echo "[+] wait warp-svc show status $(/usr/bin/warp-cli status 2>/dev/null | grep 'Status')  ..."
+    else
+        "[+] Waiting for warp to connect..."
+    fi
     sleep 1
 done
 
