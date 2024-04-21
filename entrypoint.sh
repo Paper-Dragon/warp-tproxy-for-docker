@@ -95,7 +95,7 @@ while ! /usr/bin/warp-cli status 2>/dev/null | grep 'Status'; do
         echo -e "[!] wait for warp-svc to start in debug mode"
         echo "[+] wait warp-svc show status $(/usr/bin/warp-cli status 2>/dev/null | grep 'Status')  ..."
     else
-        "[+] Waiting for warp to connect..."
+        echo "[+] Waiting for warp to connect..."
     fi
     sleep 1
 done
