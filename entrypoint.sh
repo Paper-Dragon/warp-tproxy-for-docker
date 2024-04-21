@@ -70,7 +70,7 @@ fi
 if [ -f "/root/.local/share/warp/accepted-tos.txt" ]; then
     echo "[+] warp's TOS already accepted!"
 else
-    echo "[+] Bypassing warp's TOS..."
+    echo "[+] Bypassing warp's TOS ..."
     mkdir -p /root/.local/share/warp
     echo -n 'yes' >/root/.local/share/warp/accepted-tos.txt
 fi
@@ -82,7 +82,8 @@ else
     echo "[+] Starting warp-svc..."
     if [ ${debug} == "True" ]; then
         echo -e "[!] warp-svc in debug mode"
-        nohup /usr/bin/warp-svc >/dev/console 2>&1 &
+        echo "[!] `docker exec -it container-id tail -f /nohup.out` show warp svc log"
+        nohup /usr/bin/warp-svc 2>&1 &
     else
         nohup /usr/bin/warp-svc >/dev/null 2>&1 &
     fi
@@ -91,7 +92,7 @@ fi
 
 # wait for warp-svc to start
 while ! /usr/bin/warp-cli status 2>/dev/null | grep 'Status'; do
-     if [ ${debug} == "True" ]; then
+    if [ ${debug} == "True" ]; then
         echo -e "[!] wait for warp-svc to start in debug mode"
         echo "[+] wait warp-svc show status $(/usr/bin/warp-cli status 2>/dev/null | grep 'Status')  ..."
     else
@@ -160,8 +161,8 @@ while true; do
             echo -e "\033[2K\r[!] warp connection lost! retrying..."
             connect_lost=true
             /usr/bin/warp-cli registration delete >/dev/null 2>&1 &&
-                /usr/bin/warp-cli registration new >/dev/null 2>&1 &&
-                /usr/bin/warp-cli connect >/dev/null 2>&1
+            /usr/bin/warp-cli registration new >/dev/null 2>&1 &&
+            /usr/bin/warp-cli connect >/dev/null 2>&1
         fi
         /usr/bin/warp-cli connect >/dev/null 2>&1
         echo -n "."

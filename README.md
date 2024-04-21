@@ -98,11 +98,11 @@ jockerdragon/warp-tproxy   latest    1cce82cba813   10 hours ago   570MB
 
 
 # use env just for test, you can set it in ./secrets
-export WARP_ORG_ID=deepwn
+export WARP_ORG_ID=paperdragon
 export WARP_AUTH_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxx.access
 export WARP_AUTH_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-podman run -d --name warp \
+docker run -d --name warp \
   -e WARP_ORG_ID=WARP_ORG_ID \
   -e WARP_AUTH_CLIENT_ID=WARP_AUTH_CLIENT_ID \
   -e WARP_AUTH_CLIENT_SECRET=WARP_AUTH_CLIENT_SECRET \
@@ -125,6 +125,11 @@ and you can see the output like this:
 [+] Starting warp-svc...
 
 ```
+
+## tips
+add environment to command line
+
+- **DEBUG** - Set `DEBUG=True` to env show detail.
 
 
 ## License
