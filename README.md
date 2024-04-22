@@ -1,16 +1,24 @@
-# Warpod
+# Warp Tproxy For Docker
+
+[中文文档](./README.zh_CN.md) | [English README](./README.md)
+
+
 
 A containerized [WARP](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp) client proxy. (ubuntu:22.04 + warp-svc) for use Zero Trust and private network inside container project and k8s.
 
+Together with the [docker-transparent-proxy](https://github.com/Paper-Dragon/docker-transparent-proxy/tree/main/tproxy-warp) project, implement assigning a public IP address to each container.
+
 Working with `free` or `warp+` and `zero Trust` network.
 
-- [Warpod](#warpod)
+- [Warp Tproxy For Docker](#Warp-Tproxy-For-Docker)
   - [Features](#features)
   - [Environment Variables](#environment-variables)
   - [Registration auto switch](#registration-auto-switch)
   - [Setting MDM in dashboard](#setting-mdm-in-dashboard)
   - [Build image locally](#build-image-locally)
-  - [Example and tips](#example-and-tips)
+  - [Example](#example)
+  - [Tips](#tips)
+  - [Acknowledgement](#acknowledgement)
   - [License](#license)
 
 ## Features
@@ -82,7 +90,7 @@ but for not break the `entrypoint.sh` flow. plase do **NOT** change this part:
 docker build -t paperdragon/warp-tproxy .
 ```
 
-## Example and tips
+## Example
 
 test run with docker on ubuntu 23.04:
 
@@ -126,10 +134,14 @@ and you can see the output like this:
 
 ```
 
-## tips
+## Tips
 add environment to command line
 
-- **DEBUG** - Set `DEBUG=True` to env show detail.
+- **DEBUG** - Set `DEBUG=True` to env show more detail.
+
+## Acknowledgement
+
+- This project is modified from the [Warpod](https://github.com/deepwn/warpod.git) project, which implements a Warp container exposing an HTTP proxy for external container usage.
 
 
 ## License
