@@ -39,7 +39,7 @@ jobs:
               uses: docker/metadata-action@v5
               with:
                   images: |
-                      ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+                      ${{ vars.REGISTRY }}/${{ vars.IMAGE_NAME }}
                   # Extracts the version from the tag or uses the input value
                   tags: |
                       type=raw,value=${{ github.event.inputs.tags }},enable=${{ !!github.event.inputs.tags }}
